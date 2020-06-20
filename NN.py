@@ -4,7 +4,7 @@ inputs = np.load("./data/X.npy")[:50000]
 outputs = np.load("./data/y.npy").T[:50000]
 samples = inputs.shape[0]
 input_size = 7
-hidden_size = 10
+hidden_size = 30
 epsilon_init = 0.12
 rand_weight1 = np.random.rand(hidden_size,input_size+1) *(2 * epsilon_init) - epsilon_init
 rand_weight2 =  np.random.rand(1,hidden_size+1) *(2 * epsilon_init) - epsilon_init
@@ -21,6 +21,7 @@ def matmul(X,Y):
         for j in range(len(Y[0])):
             for k in range(len(Y)):
                 result[i][j] += X[i][k] * Y[k][j]
+
 def cost_function(theta,X,y,m):
     Theta1 = theta[:hidden_size*(input_size+1)].reshape(hidden_size,input_size+1)
     Theta2 = theta[hidden_size*(input_size+1):].reshape(1,hidden_size+1)
@@ -96,16 +97,30 @@ def test(theta):
     a2=np.c_[np.ones((len(o),1)),a2]
     h = sigmoid(a2@Theta2.T)
     count= 0.0
+    tp = 0.0
+    fp = 0.0
+    fn = 0.0
     for i in range(len(o)):
+        if np.round(h[i]) == 1.0:
+            if o[i] == 0:
+                fp+=1
+            else:
+                tp+=1
+        else:
+            if o[i] == 1:
+                fn+=1
         if o[i] == np.round(h[i]):
             count+=1
-    return count/len(o)
+
+    return (count/len(o),tp/(tp+fp),tp/(tp+fn))
 
 
 args = (inputs,outputs,samples)
 print(cost_function(initial_theta,inputs,outputs,samples))
 print(test(initial_theta))
-print(np.sum(outputs)/samples)
+print(1-(np.sum(outputs)/samples))
+print(inputs)
+#print(num_gradients(initial_theta,inputs,outputs,samples),gradients(initial_theta,inputs,outputs,samples))
 ans = optimize.fmin_cg(cost_function,initial_theta,fprime=gradients,args=args)
-print(ans)
+print(np.round(ans))
 print(test(ans))
